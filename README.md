@@ -28,7 +28,7 @@ An advanced **AI voice assistant + autonomous PC control system** powered by LLM
 ## ⚙️ Installation
 
 ```bash
-git clone https://github.com/yourusername/myaihuman.git
+git clone https://github.com//Programmer-Hacktivist/myaihuman.git
 cd myaihuman
 pip install -r requirements.txt
 python src/main.py
