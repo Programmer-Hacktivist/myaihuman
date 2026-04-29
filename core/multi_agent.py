@@ -1,19 +1,11 @@
 import json
 
-
 class PlannerAgent:
     def __init__(self, llm):
         self.llm = llm
 
     def plan(self, goal):
-        prompt = f"""
-You are a planner AI.
-
-Goal: {goal}
-
-Break into steps (JSON list):
-["step1", "step2"]
-"""
+        prompt = f"Break goal into steps: {goal}"
         try:
             return json.loads(self.llm(prompt))
         except:
@@ -24,11 +16,8 @@ class ExecutorAgent:
     def __init__(self, tools):
         self.tools = tools
 
-    def execute(self, step):
-        try:
-            return self.tools.execute(step, "")
-        except Exception as e:
-            return f"Execution error: {str(e)}"
+    def execute(self, action, input_data):
+        return self.tools.execute(action, input_data)
 
 
 class CriticAgent:
@@ -41,14 +30,8 @@ Goal: {goal}
 Step: {step}
 Result: {result}
 
-Was this good? Improve?
-
 Return JSON:
-{{
-  "success": true/false,
-  "feedback": "...",
-  "next": "optional improved step"
-}}
+{{"success": true/false, "feedback": "..."}}
 """
         try:
             return json.loads(self.llm(prompt))
