@@ -6,27 +6,15 @@ class SelfCheck:
 
     def evaluate(self, goal, action, input_data):
         prompt = f"""
-You are a safety AI.
-
 Goal: {goal}
-Proposed action: {action}
-Input: {input_data}
+Action: {action}
 
-Evaluate:
-1. Is this safe?
-2. Is there a better alternative?
-3. Should we proceed?
+Safe?
 
 Return JSON:
-{{
-  "safe": true/false,
-  "reason": "...",
-  "suggestion": "optional better action"
-}}
+{{"safe": true/false}}
 """
-        response = self.llm(prompt)
-
         try:
-            return json.loads(response)
+            return json.loads(self.llm(prompt))
         except:
-            return {"safe": False, "reason": "Parsing error"}
+            return {"safe": False}
