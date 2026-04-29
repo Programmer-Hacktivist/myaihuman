@@ -1,54 +1,51 @@
 from core.multi_agent import PlannerAgent, ExecutorAgent, CriticAgent
+from core.tool_reasoner import ToolReasoner
+from core.brain import Brain
 from memory.long_term import LongTermMemory
-from ui.hud import HUD
-
 
 class AgentSystem:
-    def __init__(self, llm, tools):
+    def __init__(self, llm, tools, hud=None):
         self.planner = PlannerAgent(llm)
         self.executor = ExecutorAgent(tools)
         self.critic = CriticAgent(llm)
+
+        self.reasoner = ToolReasoner(llm, tools)
         self.memory = LongTermMemory()
-        self.hud = HUD()
+        self.brain = Brain()
+
+        self.hud = hud
+
+    def hud_update(self, t=None,a=None,r=None):
+        if self.hud:
+            self.hud.update_state(t,a,r)
 
     def run(self, goal):
-        self.hud.show("🎯 Goal", goal)
+        self.brain.set_goal(goal)
 
-        # 📚 Check past memory
-        past = self.memory.search(goal)
-        if past:
-            self.hud.show("📚 Memory Found", past[0]["steps"])
-
-        # 🧠 PLAN
         steps = self.planner.plan(goal)
-        self.hud.show("🧠 Plan", steps)
-
         results = []
 
         for step in steps:
-            self.hud.show("⚙️ Executing", step)
+            self.hud_update(f"Step: {step}")
 
-            result = self.executor.execute(step)
+            decision = self.reasoner.decide(step)
+            action = decision["action"]
+            inp = decision["input"]
+
+            self.brain.update(action)
+            self.hud_update(step, action)
+
+            result = self.executor.execute(action, inp)
             results.append(result)
 
-            self.hud.show("📥 Result", result)
+            self.hud_update(step, action, result)
 
-            # 🔁 CRITIC
             review = self.critic.review(goal, step, result)
 
-            if not review.get("success", True):
-                self.hud.show("⚠️ Critic", review.get("feedback"))
-
-                improved = review.get("next")
-                if improved:
-                    self.hud.show("🔄 Retry", improved)
-                    result = self.executor.execute(improved)
-
         final = " | ".join(results)
-
-        # 📚 Save learning
         self.memory.save(goal, steps, final)
 
-        self.hud.show("✅ Done", final)
+        self.hud_update("Done","finish",final)
+        self.brain.reset()
 
         return final
