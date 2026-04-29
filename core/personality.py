@@ -1,13 +1,12 @@
-import random
+class Personality:
 
-def get_ai_name(context="normal"):
-    if context == "romantic":
-        return "baby"
-    elif context == "command":
-        return "captain"
-    return random.choice(["sir", "boss"])
+    def apply(self, user_input, response):
+        text = user_input.lower()
 
+        if any(x in text for x in ["baby", "baal"]):
+            return f"baby, {response}"
 
-def personalize_response(text, context="normal"):
-    name = get_ai_name(context)
-    return f"{name}, {text}"
+        if any(x in text for x in ["captain", "command"]):
+            return f"captain, {response}"
+
+        return response
