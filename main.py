@@ -11,8 +11,8 @@ from voice.wake_word import listen_for_wake_word
 from perception.face_auth import authenticate
 from core.personality import personalize_response
 
-from core.agent import plan_task
-from core.executor import execute_step
+from core.auto_agent import AutoAgent
+from core.tool_setup import get_registry
 
 from tools.vmware import open_vmware, start_kali
 
@@ -20,60 +20,60 @@ from tools.vmware import open_vmware, start_kali
 # 🧠 Initialize memory
 memory = MemoryManager()
 
+# 🛠️ Tool system
+tools = get_registry()
 
-# 🤖 Agent execution (async safe)
+# 🤖 Autonomous agent
+agent = AutoAgent(ask_llm, memory, tools)
+
+
+# 🤖 Run autonomous agent
 async def run_agent(goal):
-    speak("Planning task...")
+    speak("Starting autonomous task...")
 
-    steps = await asyncio.to_thread(plan_task, goal, ask_llm)
+    result = await asyncio.to_thread(agent.run, goal)
 
-    for step in steps:
-        if not step.strip():
-            continue
-
-        speak(f"Executing: {step}")
-        result = await asyncio.to_thread(execute_step, step)
-        print("AGENT:", result)
-
-    speak("Task completed")
+    speak(result)
 
 
 # 🧠 Main processing logic
 async def process(user_input):
     text = user_input.lower()
 
-    # 🖥️ Direct commands
+    # 🖥️ Direct critical commands (fast path)
     if "open kali" in text:
         await asyncio.to_thread(open_vmware)
         await asyncio.to_thread(start_kali)
         return "Starting Kali Linux"
 
-    if "run task" in text or "do task" in text:
+    # 🤖 Autonomous agent trigger
+    if any(x in text for x in ["run task", "do task", "execute goal"]):
         await run_agent(user_input)
         return "Task execution complete"
 
-    # 🧠 Normal AI flow
+    # 🧠 Normal AI conversation
     prompt = memory.build_prompt(user_input)
     response = await asyncio.to_thread(ask_llm, prompt)
 
-    # 💾 Store conversation
+    # 💾 Store memory
     memory.add_conversation(user_input, response)
 
-    # 🧠 Auto-learn important info
     for key, value in extract_important_info(user_input):
         memory.remember_user(key, value)
 
     return response
 
 
-# 🎙️ Assistant loop (non-blocking)
+# 🎙️ Assistant loop
 async def assistant_loop():
     speak("My AI Human is now online.")
+
+    failed_attempts = 0
 
     while True:
         print("Waiting for wake word...")
 
-        # 🎧 Wake word (non-blocking)
+        # 🎧 Wake word detection
         await asyncio.to_thread(listen_for_wake_word)
 
         speak("Yes, I'm listening.")
@@ -82,9 +82,16 @@ async def assistant_loop():
         auth = await asyncio.to_thread(authenticate)
 
         if not auth:
+            failed_attempts += 1
             speak("Access denied.")
+
+            if failed_attempts >= 3:
+                speak("Multiple failed attempts detected. System locked.")
+                await asyncio.sleep(5)
+
             continue
 
+        failed_attempts = 0
         speak("Access granted.")
 
         # 🎤 Listen for command
@@ -114,6 +121,10 @@ async def assistant_loop():
 
         else:
             response = personalize_response(response, "normal")
+
+        # 📝 Logging (important)
+        with open("logs.txt", "a", encoding="utf-8") as f:
+            f.write(f"{user_input} -> {response}\n")
 
         # 🔊 Speak response
         await asyncio.to_thread(speak, response)
