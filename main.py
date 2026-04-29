@@ -3,29 +3,29 @@ from core.memory.auto_memory import extract_important_info
 from brain.groq_client import ask_llm
 from voice.speak import speak
 from voice.listen import listen
-from tools.system_control import open_app
+
+from perception.vision import detect_face_and_emotion
+from core.agent import plan_task
+from core.executor import execute_step
+from tools.vmware import open_vmware, start_kali
 
 memory = MemoryManager()
 
-def handle_command(text):
-    text = text.lower()
+def run_agent(goal):
+    steps = plan_task(goal, ask_llm)
 
-    if "open chrome" in text:
-        open_app("chrome")
-        return "Opening Chrome"
-
-    if "open vmware" in text:
-        open_app("vmware")
-        return "Opening VMware"
-
-    return None
-
+    for step in steps:
+        speak(f"Executing: {step}")
+        result = execute_step(step)
+        print(result)
 
 def process(user_input):
-    command = handle_command(user_input)
-    if command:
-        return command
+    # Agent trigger
+    if "do task" in user_input.lower():
+        run_agent(user_input)
+        return "Task execution complete"
 
+    # Normal AI
     prompt = memory.build_prompt(user_input)
     response = ask_llm(prompt)
 
@@ -40,6 +40,15 @@ def process(user_input):
 def run():
     speak("My AI Human is online, Max.")
 
+    # Face + emotion check
+    user, emotion = detect_face_and_emotion()
+
+    if user != "Max":
+        speak("Unauthorized access detected.")
+        return
+
+    speak(f"Welcome {user}. Emotion detected: {emotion}")
+
     while True:
         user_input = listen()
 
@@ -51,6 +60,12 @@ def run():
         if "exit" in user_input.lower():
             speak("Goodbye Max")
             break
+
+        if "open kali" in user_input.lower():
+            open_vmware()
+            start_kali()
+            speak("Starting Kali Linux")
+            continue
 
         response = process(user_input)
         speak(response)
