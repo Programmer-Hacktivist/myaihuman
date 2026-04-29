@@ -12,7 +12,9 @@ An advanced **AI voice assistant + autonomous PC control system** powered by LLM
 - 🧠 AI agent reasoning (Groq / LLM-based)
 - 🖥️ Full PC automation (apps, scripts, browser)
 - 🔊 Smart alert system (tiered security levels)
-- 🧠 Memory system (context-aware assistant)
+- 💾 Memory system (short + long + semantic)
+- 🧠 Auto-learning memory
+
 
 ---
 
@@ -31,5 +33,5 @@ An advanced **AI voice assistant + autonomous PC control system** powered by LLM
 git clone https://github.com//Programmer-Hacktivist/myaihuman.git
 cd myaihuman
 pip install -r requirements.txt
-python src/main.py
+python main.py
 ```
