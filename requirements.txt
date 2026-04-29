@@ -1,6 +1,6 @@
-groq
-pyttsx3
-SpeechRecognition
-sentence-transformers
-faiss-cpu
-python-dotenv
+PyQt6
+psutil
+requests
+opencv-python
+face-recognition
+numpy
