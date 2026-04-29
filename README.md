@@ -32,6 +32,7 @@ An advanced **AI voice assistant + autonomous PC control system** powered by LLM
 ```bash
 git clone https://github.com//Programmer-Hacktivist/myaihuman.git
 cd myaihuman
+pip install opencv-python deepface pyqt6 pyautogui psutil
 pip install -r requirements.txt
 python main.py
 ```
