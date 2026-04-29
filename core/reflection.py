@@ -1,43 +1,37 @@
-import json
-
 class ReflectionEngine:
-    def __init__(self, llm, memory):
+    def __init__(self, llm, memory, task_memory):
         self.llm = llm
         self.memory = memory
+        self.task_memory = task_memory
 
     def reflect(self, goal, action, result):
         prompt = f"""
 Goal: {goal}
 
-Action taken:
-{action}
+Action: {action}
+Result: {result}
 
-Result:
-{result}
-
-Analyze:
-1. Was the action successful?
-2. What should be improved?
-3. Next best step?
+Was it successful? What next?
 
 Return JSON:
 {{
   "success": true/false,
-  "improvement": "...",
   "next_action": "..."
 }}
 """
         response = self.llm(prompt)
 
+        import json
         try:
             data = json.loads(response)
         except:
-            data = {"success": False, "next_action": "finish"}
+            data = {"success": False}
 
-        # Store reflection in memory
-        self.memory.add_conversation(
-            f"[Reflection] {goal}",
-            str(data)
+        # 📚 Save learning
+        self.task_memory.save_task(
+            goal,
+            result,
+            data.get("success", False)
         )
 
         return data
